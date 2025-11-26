@@ -38,7 +38,7 @@ This repository includes:
 # 📁 Dataset Structure (Per Subject → Per Session)
 
 Each subject (SXX) may contain multiple recording sessions.
-
+```text
 GaitMultiModalDataset/
 ├── S01/
 │ ├── session_01/
@@ -46,16 +46,13 @@ GaitMultiModalDataset/
 │ └── ...
 ├── S02/
 └── ...
-
-yaml
-Copy code
-
+```
 ---
 
 # 📂 Session Directory Specification
 
 Each session folder contains **aligned RGB, Depth, IMU, and Radar data**:
-
+```text
 session_01/
 ├── rgb/
 │ └── frame_000001.jpg
@@ -87,10 +84,7 @@ session_01/
 │ └── depth_scale.txt
 │
 └── session_meta.json
-
-yaml
-Copy code
-
+```
 ---
 
 # 🎯 Modalities
