@@ -1,4 +1,11 @@
-pyrealsense2-macosx==2.54.2; sys_platform == "darwin" and platform_machine == "arm64"
-pyrealsense2; sys_platform != "darwin" or platform_machine != "arm64"
-numpy
-opencv-python
+# Core numerical and image processing dependencies
+numpy>=1.23,<3
+opencv-python>=4.8
+
+# Pose extraction
+mediapipe>=0.10
+
+# RealSense SDK Python bindings
+# macOS ARM typically needs the community wheel below.
+pyrealsense2-macosx==2.54.2; platform_system == "Darwin"
+pyrealsense2; platform_system != "Darwin"

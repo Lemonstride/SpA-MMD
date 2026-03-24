@@ -1,227 +1,269 @@
-# SpA-MMD: Multi-Modal Dataset for SpondyloArthritis (SpA)
+# SpA-MMD
 
-> ⚠️ **IMPORTANT NOTICE**  
-> This repository contains only the **processing scripts**, dataset **format specification**, and project documentation.  
-> The **SpA-MMD dataset itself is NOT included here**, is **NOT open-source**, and is protected under  
-> **Creative Commons BY-NC-ND 4.0** — **non-commercial use only**, **no derivatives**, **no redistribution**.  
->  
-> To request dataset access, please contact the authors and sign the **Data Usage Agreement (DUA)**.
+SpA-MMD is a multi-modal dataset project for Spondyloarthritis (SpA) assessment, with a focus on gait analysis, cervical mobility analysis, and multi-modal representation learning.
 
----
+This repository contains:
 
-# 📘 Overview
+- dataset processing scripts
+- dataset format specification
+- skeleton extraction and conversion tools
+- project documentation
 
-**SpA-MMD** is a *multi-modal pathological gait dataset* for **Spondyloarthritis (SpA)** patients, collected using:
+This repository does **not** contain the dataset itself.
 
-- **RGB camera** (30 FPS)
-- **Intel RealSense D455** (RGB, 16-bit depth, IMU)
-- **TI mmWave Radar** (IWR6843 / AWR6843)
+## Closed-Source Notice
 
-The dataset is designed for:
+The **SpA-MMD dataset is closed-source**.
 
-- Pathological gait analysis  
-- Spinal mobility evaluation  
-- Pose & motion estimation  
-- Radar–vision fusion  
-- Clinical assessment & machine learning research  
+The dataset is not publicly released because it contains patient-related clinical and motion data. In addition, data sharing is restricted by:
 
-This repository includes:
+- patient privacy protection requirements
+- hospital and institutional data management requirements
+- clinical data usage constraints
 
-- `process.py` and related tools  
-- Dataset folder structure specification  
-- Synchronization method  
-- Metadata format  
-- Licensing and dataset access instructions  
+This repository is therefore limited to code, format description, and processing workflow documentation.
 
----
+## Dataset Design
 
-# 📁 Dataset Structure (Per Subject → Per Session)
+Each subject contains two recording sessions:
 
-Each subject (SXX) may contain multiple recording sessions.
+- `walk`: gait recording session
+- `head_turn`: cervical rotation / head-turn recording session
+
+The dataset currently includes the following modalities:
+
+- `rgb`
+- `depth`
+- `imu`
+- `mmwave`
+- `skeleton`
+
+## Processed Dataset Structure
+
+The processed dataset is organized by subject and session.
+
 ```text
-GaitMultiModalDataset/
-├── S01/
-│ ├── session_01/
-│ ├── session_02/
-│ └── ...
-├── S02/
+SpA-MMD/
+└── processed/
+    ├── S01/
+    │   ├── walk/
+    │   └── head_turn/
+    ├── S02/
+    │   ├── walk/
+    │   └── head_turn/
+    └── ...
+```
+
+- `SXX` denotes one subject.
+- Each subject has two session folders:
+  - `walk`
+  - `head_turn`
+
+## Session Directory Format
+
+Each session directory uses the following format:
+
+```text
+walk/
+├── calib/
+├── depth/
+├── imu/
+├── labels/
+├── mmwave/
+├── rgb/
+├── skeleton/
+├── meta.json
+├── session_meta.json
+└── timestamps.csv
+```
+
+The same structure is used for `head_turn/`.
+
+## Folder Specification
+
+### `rgb/`
+
+RGB image sequence exported from the RealSense D455 color stream.
+
+Example:
+
+```text
+rgb/
+├── frame_000001.png
+├── frame_000002.png
 └── ...
 ```
----
 
-# 📂 Session Directory Specification
+### `depth/`
 
-Each session folder contains **aligned RGB, Depth, IMU, and Radar data**:
+Aligned depth image sequence exported from the RealSense D455 depth stream.
+
+Example:
+
 ```text
-session_01/
-├── rgb/
-│ └── frame_000001.jpg
-│ └── frame_000002.jpg
-│
-├── depth/
-│ └── frame_000001.png # 16-bit depth, mm
-│ └── frame_000002.png
-│
-├── imu/
-│ └── imu.csv # ax, ay, az, gx, gy, gz (aligned to 30fps)
-│
-├── mmwave/
-│ ├── raw/ # radar ADC / raw frames
-│ └── pointcloud/ # JSON/PLY
-│
-├── labels/
-│ ├── kpt2d/ # 2D keypoints (optional)
-│ ├── kpt3d/ # 3D keypoints (optional)
-│ ├── gait_phase/ # HS/TO/stance/swing
-│ └── disease_annotations.json
-│
-├── calib/
-│ ├── intrinsics_rgb.json
-│ ├── intrinsics_d455_color.json
-│ ├── intrinsics_d455_depth.json
-│ ├── extrinsics_rgb_to_d455.json
-│ ├── extrinsics_d455_to_mmwave.json
-│ └── depth_scale.txt
-│
-└── session_meta.json
+depth/
+├── frame_000001.png
+├── frame_000002.png
+└── ...
 ```
----
 
-# 🎯 Modalities
+Notes:
 
-### **RGB**
-- 30 FPS  
-- `frame_XXXXX.jpg`
+- 16-bit PNG
+- aligned with RGB frames
+- used for depth-aware processing and 3D keypoint reconstruction
 
-### **Depth (D455)**
-- 16-bit PNG (uint16)  
-- Unit: **mm**  
-- Best format for 3D skeleton, reconstruction, and medical-grade processing  
+### `imu/`
 
-### **IMU (D455)**
-CSV format:
+IMU data exported from D455.
 
-frame,timestamp,ax,ay,az,gx,gy,gz
+Example:
 
-yaml
-Copy code
+```text
+imu/
+└── imu.csv
+```
 
-### **mmWave Radar**
-- `raw/*.bin`
-- `pointcloud/*.json` or `.ply`
+### `mmwave/`
 
----
+Millimeter-wave radar data directory.
 
-# 🕒 Multi-Modal Synchronization (Manual but Reliable)
+```text
+mmwave/
+├── raw/
+├── rdmap/
+└── pointcloud/
+```
 
-Since the devices cannot be hardware-synchronized, we use a **standardized physical event**:
+- `raw/`: raw radar files such as `.bin` and radar config files
+- `rdmap/`: reserved for range-Doppler map outputs
+- `pointcloud/`: reserved for radar point cloud outputs
 
-# ✋ **Synchronization Gesture: Raise-to-Head Motion**
-This gesture is visible in **all three modalities**.
+### `labels/`
 
-### **Procedure (3 seconds):**
-1. Stand still for 1 second  
-2. Raise both hands above head  
-3. Hold (freeze) for 1 second  
-4. Lower hands  
+Session-level labels and annotations.
 
-### Why this gesture?
-- RGB: keypoints move significantly  
-- Depth: silhouette expands  
-- IMU: acceleration spike  
-- Radar: point cloud volume increases  
+```text
+labels/
+├── binary_label.txt
+├── severity_label.txt
+├── gait_phase.csv
+└── disease_annotations.json
+```
 
-**We align all modalities to RGB 30 FPS timeline based on the detected peak of this gesture.**
+- `binary_label.txt`: binary label, for example healthy vs. SpA
+- `severity_label.txt`: severity grade label
+- `gait_phase.csv`: optional gait-phase annotation file
+- `disease_annotations.json`: disease-specific notes or annotations
 
----
+### `skeleton/`
 
-# 📐 Calibration (Required for Fusion)
+Pose-derived skeleton modality generated from RGB and Depth.
 
-Store all calibration files in:
+```text
+skeleton/
+├── kpt2d/
+│   └── kpt2d.npy
+├── kpt3d/
+│   ├── kpt3d.npy
+│   ├── kpt3d.csv
+│   ├── pose_meta.json
+│   └── pose_vis/
+└── skeleton_map/
+    ├── skeleton_maps.npy
+    ├── meta.json
+    └── png/
+```
 
-session/calib/
+- `kpt2d/`: 2D body keypoints extracted from RGB
+- `kpt3d/`: 3D body keypoints reconstructed from RGB + Depth
+- `skeleton_map/`: SkeletonGait-style skeleton map representation
 
-markdown
-Copy code
+### `calib/`
 
-Includes:
+Calibration and camera parameter files.
 
-- RGB intrinsics  
-- D455 color/depth intrinsics  
-- Depth → Color extrinsics  
-- RGB → Radar extrinsics (optional)  
-- Depth scale  
+```text
+calib/
+├── intrinsics_d455_color.json
+├── intrinsics_d455_depth.json
+├── extrinsics_d455_depth_to_color.json
+├── extrinsics_d455_to_mmwave.json
+└── depth_scale.txt
+```
 
----
+These files are used for:
 
-# 🔒 Licensing
+- RGB-depth alignment
+- depth deprojection
+- future camera-radar fusion
 
-### ✔ Code License (scripts)
-**MIT License**  
-Free to use & modify.
+### `timestamps.csv`
 
-### ✔ Dataset License (data files)
-**Creative Commons BY-NC-ND 4.0**
+Frame and timestamp correspondence file for the session.
 
-- **BY（署名）**  
-- **NC（非商业用途）**  
-- **ND（禁止修改/衍生）**  
-- **No redistribution**  
+### `meta.json`
 
-### ✔ Dataset is *NOT* included or open-source
-It is distributed **only upon request + signed DUA**.
+Detailed session metadata.
 
----
+### `session_meta.json`
 
-# 📧 Dataset Access
+Compact session summary metadata.
 
-To obtain SpA-MMD dataset:
+## Modalities
 
-1. Email the authors  
-2. Sign the **Data Usage Agreement (DUA)**  
-3. Receive download link  
+### RGB
 
-Contact: <your-email-here>
-Subject: Request for SpA-MMD Dataset Access
+- color image sequence
+- used for video modeling and 2D pose estimation
 
-yaml
-Copy code
+### Depth
 
----
+- aligned depth sequence
+- used for depth-aware analysis and 3D pose lifting
 
-# 📚 Citation
+### IMU
 
-@dataset{spa_mmd_2025,
-title={SpA-MMD: Multi-Modal Dataset for Spondyloarthritis Gait Analysis},
-author={Your Name},
-year={2025},
-description={A synchronized RGB–Depth–IMU–mmWave dataset for pathological gait and spinal mobility assessment.}
-}
+- inertial motion data from D455
+- can be used as an auxiliary time-series modality
 
-yaml
-Copy code
+### mmWave
 
----
+- raw radar modality
+- can be further converted into radar features such as:
+  - range-Doppler maps
+  - point clouds
+  - other radar representations
 
-# 🛠 Tools in This Repository
+### Skeleton
 
-- `process.py`: Convert bag files → RGB / Depth / IMU / PointCloud  
-- Automatic session folder generation  
-- mmWave + D455 + RGB timestamp alignment  
-- Depth 16-bit processing utilities  
-- Visualization scripts (optional)
+- derived modality built from RGB and Depth
+- includes:
+  - 2D keypoints
+  - 3D keypoints
+  - skeleton maps
 
----
+## Processing Scripts
 
-# 🚀 Roadmap
+This repository currently includes:
 
-- Add 3D skeleton extraction  
-- Add Radar-visual fusion demo  
-- Add clinical annotation toolkit  
-- Release sample sessions (if allowed by IRB)
+- `process_dataset.py`
+  - convert raw recordings into the processed dataset structure
+- `extract_pose_3d.py`
+  - generate 2D and 3D keypoints from RGB and Depth
+- `build_skeleton_maps.py`
+  - convert keypoint sequences into skeleton-map representations
+- `reorganize_skeleton_outputs.py`
+  - reorganize skeleton-related outputs into `session/skeleton/`
 
----
+## Notes
 
-# ❤️ Acknowledgements
+- The dataset itself is not distributed in this repository.
+- The file and folder names in this README follow the current processed dataset format used by this project.
+- If the dataset structure is updated later, this README should be updated accordingly.
 
-Thanks to all SpA patients and medical collaborators who contributed to this project.
+## License
+
+The **code in this repository** is released under the **MIT License**. See [LICENSE](LICENSE).
+
+The **SpA-MMD dataset itself** is **not covered by the MIT License**. It remains closed-source and is not publicly redistributed through this repository.
