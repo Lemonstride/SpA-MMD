@@ -1,0 +1,4 @@
+pyrealsense2-macosx==2.54.2; sys_platform == "darwin" and platform_machine == "arm64"
+pyrealsense2; sys_platform != "darwin" or platform_machine != "arm64"
+numpy
+opencv-python
