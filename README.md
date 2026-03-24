@@ -1,4 +1,4 @@
-# SpA-MMD: Multi-Modal Dataset for Spondyloarthritis (SpA)
+# SpA-MMD: Multi-Modal Dataset for SpondyloArthritis (SpA)
 
 > ⚠️ **IMPORTANT NOTICE**  
 > This repository contains only the **processing scripts**, dataset **format specification**, and project documentation.  
