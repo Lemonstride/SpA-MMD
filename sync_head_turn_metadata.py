@@ -16,6 +16,22 @@ TARGET_METRIC_HEADERS = [
     "total_rom_deg",
     "asymmetry_deg",
 ]
+BASE_LABEL_HEADERS = [
+    "subject_id",
+    "姓名",
+    "性别",
+    "年龄",
+    "身高",
+    "体重",
+    "测试时间",
+]
+PATIENT_ONLY_LABEL_HEADERS = [
+    "病程",
+    "主要诊断",
+    "步行能力等级",
+    "是否跛行",
+    "平衡能力",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -114,9 +130,69 @@ def update_json_with_metadata(path: Path, patient_metadata: dict[str, Any]) -> N
     if path.exists():
         payload = read_json(path)
     payload["clinical_metadata"] = patient_metadata
-    if "severity" in patient_metadata:
-        payload["severity_label"] = patient_metadata["severity"]
+    severity = patient_metadata.get("severity")
+    if severity is not None:
+        payload["severity_label"] = severity
+        payload["binary_label"] = 0 if float(severity) == 0 else 1
     write_json(path, payload)
+
+
+def format_label_value(value: Any) -> str:
+    if value is None:
+        return "unknown"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
+def build_disease_annotations(patient_metadata: dict[str, Any], existing_payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    severity = patient_metadata.get("severity")
+    binary_label = None if severity is None else (0 if float(severity) == 0 else 1)
+
+    payload: dict[str, Any] = {
+        "binary_label": binary_label,
+        "severity_label": severity,
+        "notes": "",
+    }
+    if existing_payload is not None:
+        payload["notes"] = existing_payload.get("notes", "")
+
+    for key in BASE_LABEL_HEADERS:
+        value = patient_metadata.get(key)
+        if value is not None:
+            payload[key] = value
+
+    if binary_label == 1:
+        for key in PATIENT_ONLY_LABEL_HEADERS:
+            value = patient_metadata.get(key)
+            if value not in (None, ""):
+                payload[key] = value
+
+    return payload
+
+
+def update_label_files(label_dir: Path, patient_metadata: dict[str, Any]) -> int:
+    label_dir.mkdir(parents=True, exist_ok=True)
+    existing_annotations: dict[str, Any] | None = None
+    disease_annotations_path = label_dir / "disease_annotations.json"
+    if disease_annotations_path.exists():
+        existing_annotations = read_json(disease_annotations_path)
+
+    annotations_payload = build_disease_annotations(patient_metadata, existing_annotations)
+    write_json(disease_annotations_path, annotations_payload)
+
+    binary_value = annotations_payload.get("binary_label")
+    severity_value = annotations_payload.get("severity_label")
+
+    (label_dir / "binary_label.txt").write_text(
+        format_label_value(binary_value),
+        encoding="utf-8",
+    )
+    (label_dir / "severity_label.txt").write_text(
+        format_label_value(severity_value),
+        encoding="utf-8",
+    )
+    return 3
 
 
 def main() -> None:
@@ -145,6 +221,7 @@ def main() -> None:
     }
 
     processed_subjects = 0
+    processed_sessions = 0
     updated_json_files = 0
     updated_excel_rows = 0
 
@@ -158,27 +235,36 @@ def main() -> None:
         row = read_row_dict(worksheet, row_index, headers)
         patient_metadata = clean_patient_metadata(row)
 
-        session_dir = root_dir / subject_id_str / "head_turn"
-        summary_path = session_dir / "labels" / "head_turn_state" / "summary.json"
-        meta_path = session_dir / "meta.json"
-        session_meta_path = session_dir / "session_meta.json"
+        subject_dir = root_dir / subject_id_str
 
-        if summary_path.exists():
-            summary_payload = read_json(summary_path)
-            summary_payload["clinical_metadata"] = patient_metadata
-            if "severity" in patient_metadata:
-                summary_payload["severity_label"] = patient_metadata["severity"]
-            write_json(summary_path, summary_payload)
-            updated_json_files += 1
+        for session_name in ("head_turn", "walk"):
+            session_dir = subject_dir / session_name
+            if not session_dir.exists():
+                continue
 
-            for metric_key, column_index in metric_columns.items():
-                worksheet.cell(row=row_index, column=column_index, value=summary_payload.get(metric_key))
-            updated_excel_rows += 1
+            labels_dir = session_dir / "labels"
+            updated_json_files += update_label_files(labels_dir, patient_metadata)
 
-        for json_path in (meta_path, session_meta_path):
-            if json_path.exists():
-                update_json_with_metadata(json_path, patient_metadata)
+            summary_path = labels_dir / "head_turn_state" / "summary.json"
+            if session_name == "head_turn" and summary_path.exists():
+                summary_payload = read_json(summary_path)
+                summary_payload["clinical_metadata"] = patient_metadata
+                if "severity" in patient_metadata:
+                    summary_payload["severity_label"] = patient_metadata["severity"]
+                    summary_payload["binary_label"] = 0 if float(patient_metadata["severity"]) == 0 else 1
+                write_json(summary_path, summary_payload)
                 updated_json_files += 1
+
+                for metric_key, column_index in metric_columns.items():
+                    worksheet.cell(row=row_index, column=column_index, value=summary_payload.get(metric_key))
+                updated_excel_rows += 1
+
+            for json_path in (session_dir / "meta.json", session_dir / "session_meta.json"):
+                if json_path.exists():
+                    update_json_with_metadata(json_path, patient_metadata)
+                    updated_json_files += 1
+
+            processed_sessions += 1
 
         processed_subjects += 1
         row_index += 1
@@ -186,6 +272,7 @@ def main() -> None:
     workbook.save(output_xlsx)
 
     print(f"处理受试者数: {processed_subjects}")
+    print(f"处理 session 数: {processed_sessions}")
     print(f"更新 JSON 文件数: {updated_json_files}")
     print(f"更新 Excel 行数: {updated_excel_rows}")
     print(f"输出 Excel: {output_xlsx}")

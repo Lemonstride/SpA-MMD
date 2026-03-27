@@ -308,13 +308,70 @@ Key fields in `summary.json` include:
 Single session:
 
 ```bash
-python estimate_head_turn_state.py --session-dir /path/to/S01/head_turn --overwrite --save-vis
+python estimate_head_turn_state.py --session-dir /your/own/path/processed/S01/head_turn --overwrite --save-vis
 ```
 
 Batch process a processed dataset root:
 
 ```bash
-python estimate_head_turn_state.py --root-dir /path/to/processed --overwrite --save-vis
+python estimate_head_turn_state.py --root-dir /your/own/path/processed --overwrite --save-vis
+```
+
+## Metadata Sync Script
+
+To merge patient information, severity labels, and processed `head_turn` metrics into both session JSON files and an Excel summary table, use:
+
+- `sync_head_turn_metadata.py`
+  - read patient metadata from a workbook such as `total.xlsx`
+  - update `head_turn` and `walk` label files
+  - write `clinical_metadata`, `severity_label`, and `binary_label` into session JSON files
+  - write processed head-turn summary metrics back into the workbook
+
+### Input Requirements
+
+The script expects:
+
+- a processed dataset root such as `/your/own/path/processed`
+- an Excel workbook containing at least:
+  - `subject_id`
+  - `severity`
+
+If present, the following workbook columns will be updated with processed head-turn results:
+
+- `left_max_angle`
+- `right_max_angle`
+- `total_rom_deg`
+- `asymmetry_deg`
+
+### Updated JSON Files
+
+For each available `SXX/head_turn` and `SXX/walk`, the script updates:
+
+- `meta.json`
+- `session_meta.json`
+- `labels/disease_annotations.json`
+- `labels/binary_label.txt`
+- `labels/severity_label.txt`
+
+For each available `SXX/head_turn`, it also updates:
+
+- `labels/head_turn_state/summary.json`
+
+### Usage
+
+Overwrite the original workbook:
+
+```bash
+python sync_head_turn_metadata.py --root-dir /your/own/path/processed --xlsx /your/own/path/total.xlsx
+```
+
+Write to a new workbook:
+
+```bash
+python sync_head_turn_metadata.py \
+  --root-dir /your/own/path/processed \
+  --xlsx /your/own/path/total.xlsx \
+  --output-xlsx /your/own/path/total_with_head_turn.xlsx
 ```
 
 ## Notes

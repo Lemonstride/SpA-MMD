@@ -10,6 +10,7 @@ output/
 raw/
 models/
 total.xlsx
+total_with_angle.xlsx
 total_with_head_turn.xlsx
 
 # Sensor raw files
