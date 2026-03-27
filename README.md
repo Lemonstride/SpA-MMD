@@ -256,6 +256,67 @@ This repository currently includes:
 - `reorganize_skeleton_outputs.py`
   - reorganize skeleton-related outputs into `session/skeleton/`
 
+## Head-Turn State Script
+
+For `head_turn` sessions, this repository provides a state-based script:
+
+- `estimate_head_turn_state.py`
+  - estimate head-turn state and peak frames from `kpt2d` + aligned `depth`
+  - export per-frame state labels, summary metrics, and key-frame previews
+
+This script is intended for robust `head_turn` state/peak detection from the current far-view recordings.
+It outputs relative proxy scores rather than clinically calibrated absolute cervical angles.
+
+### Input Requirements
+
+The script expects a processed `head_turn` session containing:
+
+- `rgb/`
+- `depth/`
+- `calib/depth_scale.txt`
+- `skeleton/kpt2d/kpt2d.npy` or `labels/kpt2d.npy`
+
+### Output Files
+
+The script writes outputs to:
+
+```text
+head_turn/
+└── labels/
+    └── head_turn_state/
+        ├── states.csv
+        ├── summary.json
+        ├── key_frames/
+        │   ├── neutral.png
+        │   ├── subject_left_peak.png
+        │   └── subject_right_peak.png
+        └── vis/
+```
+
+Key fields in `summary.json` include:
+
+- `neutral_frame_index`
+- `subject_left_peak_frame_index`
+- `subject_right_peak_frame_index`
+- `left_max_angle_deg`
+- `right_max_angle_deg`
+- `total_rom_deg`
+- `asymmetry_deg`
+
+### Usage
+
+Single session:
+
+```bash
+python estimate_head_turn_state.py --session-dir /path/to/S01/head_turn --overwrite --save-vis
+```
+
+Batch process a processed dataset root:
+
+```bash
+python estimate_head_turn_state.py --root-dir /path/to/processed --overwrite --save-vis
+```
+
 ## Notes
 
 - The dataset itself is not distributed in this repository.

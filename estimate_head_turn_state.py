@@ -227,10 +227,7 @@ def annotate_frame(
     return canvas
 
 
-def main() -> None:
-    args = parse_args()
-    session_dir = args.session_dir.expanduser().resolve()
-
+def process_session(session_dir: Path, args: argparse.Namespace) -> None:
     kpt2d = load_kpt2d(session_dir)
     rgb_files = list_images(session_dir / "rgb")
     depth_files = list_images(session_dir / "depth")
@@ -423,6 +420,42 @@ def main() -> None:
     print(f"汇总结果已保存: {output_dir / 'summary.json'}")
     if vis_dir is not None:
         print(f"可视化已保存: {vis_dir}")
+
+
+def main() -> None:
+    args = parse_args()
+
+    if args.session_dir is not None and args.root_dir is not None:
+        raise SystemExit("--session-dir 和 --root-dir 只能二选一")
+
+    if args.session_dir is None and args.root_dir is None:
+        session_dirs = [DEFAULT_SESSION_DIR]
+    elif args.root_dir is not None:
+        session_dirs = iter_head_turn_sessions(args.root_dir.expanduser().resolve())
+    else:
+        session_dirs = [args.session_dir.expanduser().resolve()]
+
+    failures: list[tuple[Path, str]] = []
+    for index, session_dir in enumerate(session_dirs, start=1):
+        print(f"[{index}/{len(session_dirs)}] 处理: {session_dir}")
+        try:
+            process_session(session_dir, args)
+        except KeyboardInterrupt:
+            raise
+        except SystemExit as exc:
+            failures.append((session_dir, str(exc)))
+            print(f"处理失败: {session_dir}")
+            print(f"原因: {exc}")
+        except Exception as exc:
+            failures.append((session_dir, str(exc)))
+            print(f"处理失败: {session_dir}")
+            print(f"原因: {exc}")
+
+    if failures:
+        print("\n以下 session 处理失败:")
+        for session_dir, message in failures:
+            print(f"- {session_dir}: {message}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
