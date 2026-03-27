@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_RAW_ROOT = Path("F:/datasets/SpA-MMD/raw")
-DEFAULT_OUTPUT_ROOT = Path("F:/datasets/SpA-MMD/processed")
+DEFAULT_RAW_ROOT = Path("/your/own/path/raw")
+DEFAULT_OUTPUT_ROOT = Path("/your/own/path/processed")
 DEFAULT_SESSION_MAP = {"session1": "walk", "session2": "head_turn"}
 
 

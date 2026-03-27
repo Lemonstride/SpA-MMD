@@ -10,9 +10,9 @@ import cv2
 import numpy as np
 
 
-DEFAULT_SESSION_DIR = Path("F:/datasets/SpA-MMD/processed/S01/walk")
-DEFAULT_ROOT_DIR = Path("F:/datasets/SpA-MMD/processed")
-DEFAULT_MODEL_ASSET = Path("F:/datasets/SpA-MMD/models/pose_landmarker_full.task")
+DEFAULT_SESSION_DIR = Path("/your/own/path/processed/S01/walk")
+DEFAULT_ROOT_DIR = Path("/your/own/path/processed")
+DEFAULT_MODEL_ASSET = Path("/your/own/path/models/pose_landmarker_full.task")
 LANDMARK_NAMES = [
     "nose",
     "left_eye_inner",

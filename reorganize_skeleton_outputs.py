@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 
-DEFAULT_ROOT_DIR = Path("F:/datasets/SpA-MMD/processed")
+DEFAULT_ROOT_DIR = Path("/your/own/path/processed")
 SESSION_NAMES = ("walk", "head_turn")
 
 
@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         "--root-dir",
         type=Path,
         default=DEFAULT_ROOT_DIR,
-        help="Processed dataset root, for example F:/datasets/SpA-MMD/processed",
+        help="Processed dataset root, for example /your/own/path/processed",
     )
     parser.add_argument(
         "--dry-run",

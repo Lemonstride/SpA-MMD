@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_ROOT_DIR = Path("F:/SpA-MMD/processed")
-DEFAULT_XLSX_PATH = Path("F:/SpA-MMD/total.xlsx")
+DEFAULT_ROOT_DIR = Path("/your/own/path/processed")
+DEFAULT_XLSX_PATH = Path("/your/own/path/total.xlsx")
 TARGET_METRIC_HEADERS = [
     "left_max_angle",
     "left_max_angle_deg",

@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 
 
-DEFAULT_SESSION_DIR = Path("F:/datasets/SpA-MMD/processed/S01/walk")
+DEFAULT_SESSION_DIR = Path("/your/own/path/processed/S01/walk")
 COCO17_LIMBS = [
     (0, 1),
     (0, 2),

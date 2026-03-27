@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_BAG_PATH = Path("/Users/ice/Desktop/S01/session1/20251215_094856.bag")
-DEFAULT_OUTPUT_DIR = Path("/Users/ice/Documents/SpA-MMD/output/session1")
+DEFAULT_BAG_PATH = Path("/your/own/path/session1/example.bag")
+DEFAULT_OUTPUT_DIR = Path("/your/own/path/output/session1")
 
 
 def parse_args() -> argparse.Namespace:

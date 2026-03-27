@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 
-DEFAULT_SESSION_DIR = Path("/Users/ice/Documents/SpA-MMD/output/session1")
+DEFAULT_SESSION_DIR = Path("/your/own/path/output/session1")
 HOG = cv2.HOGDescriptor()
 HOG.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 

@@ -10,8 +10,8 @@ import cv2
 import numpy as np
 
 
-DEFAULT_SESSION_DIR = Path("F:/SpA-MMD/processed/S01/head_turn")
-DEFAULT_ROOT_DIR = Path("F:/SpA-MMD/processed")
+DEFAULT_SESSION_DIR = Path("/your/own/path/processed/S01/head_turn")
+DEFAULT_ROOT_DIR = Path("/your/own/path/processed")
 LANDMARK_INDEX = {
     "nose": 0,
     "left_eye": 2,
