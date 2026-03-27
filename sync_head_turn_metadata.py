@@ -18,20 +18,52 @@ TARGET_METRIC_HEADERS = [
 ]
 BASE_LABEL_HEADERS = [
     "subject_id",
-    "姓名",
-    "性别",
-    "年龄",
-    "身高",
-    "体重",
-    "测试时间",
+    "name",
+    "gender",
+    "age",
+    "height",
+    "weight",
+    "test_time",
 ]
 PATIENT_ONLY_LABEL_HEADERS = [
-    "病程",
-    "主要诊断",
-    "步行能力等级",
-    "是否跛行",
-    "平衡能力",
+    "course_of_disease",
+    "main_diagnosis",
+    "walking_ability",
+    "limp_or_not",
+    "stable_ability",
 ]
+HEADER_ALIASES = {
+    "subject_id": "subject_id",
+    "姓名": "name",
+    "name": "name",
+    "性别": "gender",
+    "gender": "gender",
+    "年龄": "age",
+    "age": "age",
+    "身高": "height",
+    "height": "height",
+    "体重": "weight",
+    "weight": "weight",
+    "测试时间": "test_time",
+    "test_time": "test_time",
+    "病程": "course_of_disease",
+    "course_of_disease": "course_of_disease",
+    "主要诊断": "main_diagnosis",
+    "main_diagnosis": "main_diagnosis",
+    "步行能力等级": "walking_ability",
+    "walking_ability": "walking_ability",
+    "是否跛行": "limp_or_not",
+    "limp_or_not": "limp_or_not",
+    "平衡能力": "stable_ability",
+    "stable_ability": "stable_ability",
+    "severity": "severity",
+    "left_max_angle": "left_max_angle",
+    "left_max_angle_deg": "left_max_angle_deg",
+    "right_max_angle": "right_max_angle",
+    "right_max_angle_deg": "right_max_angle_deg",
+    "total_rom_deg": "total_rom_deg",
+    "asymmetry_deg": "asymmetry_deg",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -117,11 +149,12 @@ def clean_patient_metadata(row: dict[str, Any]) -> dict[str, Any]:
     }
     metadata: dict[str, Any] = {}
     for key, value in row.items():
-        if key in excluded:
+        canonical_key = HEADER_ALIASES.get(key, key)
+        if canonical_key in excluded:
             continue
         if value is None:
             continue
-        metadata[key] = value
+        metadata[canonical_key] = value
     return metadata
 
 
